@@ -2,15 +2,15 @@
 
 ## Setup
 * Check your email provider for info about setting up third-party access to smtp host
-* Copy config.sample.js and update with your settings
+* Copy `config.sample.js` to `config.js` and update with your settings
 
 ## Run server
 `yarn && yarn start`
 
 ## Usage
-Send `POST` request to `1.2.3.4:3002:/send`
+Send `POST` request to `yourserver.com:3002:/send`
 
-Body should be of form:
+`POST` Body should be of form:
 
 ```
 {
