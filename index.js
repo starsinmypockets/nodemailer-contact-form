@@ -3,6 +3,8 @@ const router = express.Router();
 const nodemailer = require('nodemailer');
 const cors = require('cors');
 const creds = require('./config');
+const axios = require('axios');
+const qs = require('querystring');
 
 const transport = {
     host: creds.SERVER,
@@ -23,10 +25,10 @@ transporter.verify((error, success) => {
   }
 });
 
-router.post('/send', (req, res, next) => {
+router.post('/send', async (req, res, next) => {
   const name = req.body.name
   const email = req.body.email
-  const to = req.body.to
+  const to = "starsinmypockets@gmail.com"
   const title = req.body.title
   const message = req.body.message
   const content = `name: ${name} \n email: ${email} \n title: ${title} \n message: ${message} `
@@ -36,6 +38,40 @@ router.post('/send', (req, res, next) => {
     to: to, 
     subject: 'New Message from Contact Form',
     text: content
+  }
+  const data = qs.stringify({
+    secret: creds.RECAPCHA_SECRET_KEY,
+    response: req.body.capcha
+  })
+
+  const capchaRes = await axios({
+    method: "post",
+    url: "https://www.google.com/recaptcha/api/siteverify",
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    data
+  });
+
+  const capchaBody = await capchaRes.data;
+
+  console.log("Capcha RES", capchaBody);
+
+  if (capchaBody.success) {
+    transporter.sendMail(mail, (err, data) => {
+      if (err) {
+        res.json({
+          status: 'fail',
+          error: err
+        })
+      } else {
+        res.json({
+         status: 'success'
+        })
+      }
+    })
+  } else {
+    res.json({
+      status: 'spam'
+    })
   }
 
   transporter.sendMail(mail, (err, data) => {
