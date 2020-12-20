@@ -25,6 +25,10 @@ transporter.verify((error, success) => {
   }
 });
 
+router.get('/test', async (req, res, next) => {
+  return res.json({"hello": "world"})
+})
+
 router.post('/send', async (req, res, next) => {
   const name = req.body.name
   const email = req.body.email
@@ -39,53 +43,58 @@ router.post('/send', async (req, res, next) => {
     subject: 'New Message from Contact Form',
     text: content
   }
-  const data = qs.stringify({
-    secret: creds.RECAPCHA_SECRET_KEY,
-    response: req.body.capcha
-  })
-
-  const capchaRes = await axios({
-    method: "post",
-    url: "https://www.google.com/recaptcha/api/siteverify",
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    data
-  });
-
-  const capchaBody = await capchaRes.data;
-
-  console.log("Capcha RES", capchaBody);
-
-  if (capchaBody.success) {
-    transporter.sendMail(mail, (err, data) => {
-      if (err) {
-        res.json({
-          status: 'fail',
-          error: err
-        })
-      } else {
-        res.json({
-         status: 'success'
-        })
-      }
+  
+  console.log(req.body)
+  if (req.body.capcha) {
+    const data = qs.stringify({
+      secret: creds.RECAPCHA_SECRET_KEY,
+      response: req.body.capcha
     })
-  } else {
-    res.json({
-      status: 'spam'
-    })
-  }
 
-  transporter.sendMail(mail, (err, data) => {
-    if (err) {
-      res.json({
-        status: 'fail',
-        error: err
+    const capchaRes = await axios({
+      method: "post",
+      url: "https://www.google.com/recaptcha/api/siteverify",
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      data
+    });
+
+    const capchaBody = await capchaRes.data;
+
+    console.log("Capcha RES", capchaBody);
+
+    if (capchaBody.success) {
+      transporter.sendMail(mail, (err, data) => {
+        if (err) {
+          res.json({
+            status: 'fail',
+            error: err
+          })
+        } else {
+          res.json({
+           status: 'success'
+          })
+        }
       })
     } else {
       res.json({
-       status: 'success'
+        status: 'spam'
       })
     }
-  })
+  } else { // send email if capcha is down
+    transporter.sendMail(mail, (err, data) => {
+        if (err) {
+          res.json({
+            status: 'fail',
+            error: err
+          })
+        } else {
+          res.json({
+           status: 'success'
+          })
+        }
+    })
+  
+  }
 })
 
 const app = express()

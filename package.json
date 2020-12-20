@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon index.js"
+    "start": "forever start -e /var/log/next.error -l /var/log/next.log -a index.js"
   },
   "keywords": [],
   "author": "",
